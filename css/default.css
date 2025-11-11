@@ -1,0 +1,324 @@
+body {
+  font-size: 0.9em;
+  font-family: verdana, arial, sans-serif;
+  background-color: #000;
+  margin: auto;
+}
+
+button {
+  width: 130px;
+  height: 30px;
+  margin: 10px 30px 0px 30px;
+  border-radius: 5px;
+  background-color: #eee;
+  font-size: 0.9em;
+  transition: all 120ms ease-in-out;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* Hover and active styles for all buttons */
+button:hover {
+  background-color: #f7f7f7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08);
+  background-color: #e6e6e6;
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(100, 150, 250, 0.12);
+}
+
+canvas {
+  background-color: #fff;
+  padding-bottom: 10px;
+  display: block;
+}
+
+#sudoku {
+  margin-left: auto;
+  margin-right: auto;
+  width: 945px;
+  height: 900px;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.banner {
+  text-align: center;
+}
+
+.myButton {
+  background-color: #222;
+  -moz-border-radius: 28px;
+  -webkit-border-radius: 28px;
+  border-radius: 12px;
+  display: inline-block;
+  cursor: pointer;
+  color: #ffffff;
+  font-family: Arial;
+  font-size: 14px;
+  padding: 12px;
+  text-decoration: none;
+  width: 150px;
+  line-height: 14px;
+}
+
+.myButton:hover {
+  background-color: #44c767;
+  font-size: 15px;
+}
+
+.messageout {
+  text-align: center;
+}
+
+#help {
+  top: 60px;
+  font-size: 10px;
+  width: 220px;
+  float: right;
+}
+
+#main {
+  padding: 10px;
+  float: left;
+}
+
+#help li {
+  padding-bottom: 6px;
+}
+
+h2 {
+  color: #444444;
+  text-align: center;
+}
+td {
+  vertical-align: top;
+}
+td.help {
+  border-left: 1px dashed #000;
+}
+
+td.help li {
+  padding-bottom: 6px;
+  font-size: 0.8em;
+}
+
+.myButton-weixin {
+  background-color: #222;
+  -moz-border-radius: 28px;
+  -webkit-border-radius: 28px;
+  border-radius: 12px;
+  display: inline-block;
+  cursor: pointer;
+  color: #ffffff;
+  font-family: Arial;
+  font-size: 14px;
+  padding: 12px;
+  text-decoration: none;
+  width: 150px;
+  line-height: 14px;
+}
+
+.myButton-weixin:hover {
+  background-color: #44c767;
+  font-size: 15px;
+}
+
+.myButton-weixin .weixin_nr {
+  width: 300px;
+  height: 320px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #000;
+  text-align: center;
+  position: absolute;
+  margin: 22px auto;
+  display: none;
+  font-weight: 200;
+}
+
+.myButton-weixin .weixin_nr img {
+  margin-bottom: 5px;
+}
+
+.myButton-weixin .weixin_nr .arrow {
+  width: 0;
+  height: 0;
+  border-bottom: 10px solid #000;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  position: absolute;
+  left: 50px;
+  top: -10px;
+}
+
+.myButton-weixin.on .weixin_nr {
+  display: block;
+}
+
+/* Styles for editable OCR grid cells */
+.grid-cell {
+  cursor: text;
+  user-select: text;
+}
+.grid-cell:focus {
+  outline: 2px solid #4a90e2;
+  background-color: #f0f8ff;
+}
+
+/* Note toggle icon button */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+  transition: background-color 0.12s ease, color 0.12s ease,
+    box-shadow 0.12s ease, transform 0.12s ease;
+}
+.icon-btn:hover {
+  background: #f3f3f3;
+}
+.icon-btn.active,
+.icon-btn[aria-pressed="true"] {
+  /* stronger visual when active */
+  background: linear-gradient(180deg, #fff6f6, #ffe4e1);
+  color: #c33;
+  box-shadow: 0 6px 14px rgba(201, 33, 33, 0.12),
+    inset 0 0 0 2px rgba(255, 228, 225, 0.6);
+  transform: translateY(-1px);
+}
+
+.icon-btn.active i,
+.icon-btn[aria-pressed="true"] i {
+  color: #c33;
+  transform: scale(1.08);
+}
+#tbSerial {
+  width: 538px;
+  background-color: #eee;
+  margin-top: 5px;
+  font-size: 1em;
+}
+
+.Applybtn {
+  border: 3px dashed #bec0da;
+  border-radius: 5px;
+  margin: 20px 10px;
+  font-size: 0.9em;
+  box-shadow: 0 10px 20px rgba(78, 132, 253, 0.4);
+  background-color: #efeef3;
+  justify-content: center;
+  width: auto;
+  font-weight: 100;
+  display: block;
+}
+.Modifybtn {
+  display: flex;
+}
+
+.Modifybtn button {
+  margin: 5px;
+  width: 100px;
+  height: 40px;
+}
+
+#canvas2 {
+  margin: auto;
+}
+
+/* 3x3 digit button grid */
+.digit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 60px);
+  grid-auto-rows: 60px;
+  margin: 10px 0 20px 0;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+.digit-btn {
+  width: 60px;
+  height: 60px;
+  margin: 0;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease, box-shadow 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.digit-btn:hover {
+  background: #f6f8fa;
+  transform: translateY(-2px);
+}
+.digit-btn:active {
+  transform: translateY(0);
+}
+.digit-btn.selected {
+  background: linear-gradient(180deg, #fff6f6, #ffe4e1);
+  border-color: #c33;
+  color: #c33;
+  box-shadow: 0 6px 12px rgba(201, 33, 51, 0.12);
+}
+
+/* Styled file-picker label and hidden real input */
+label[for="imgFile"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.95em;
+}
+
+.file-btn {
+  background-color: #4a90e2;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08);
+  transition: background-color 0.12s ease, transform 0.08s ease;
+}
+.file-btn:hover {
+  background-color: #3a78d1;
+  transform: translateY(-1px);
+}
+
+#imgFile {
+  /* hide the native file input but keep it accessible */
+  position: absolute;
+  left: -9999px;
+}
+
+/* Message area shown near the digit selector */
+#message {
+  width: 330px;
+  margin: 10px;
+  color: red;
+}
+
+/* Extra info area for timing/status text */
+#extraInfo {
+  font-size: 0.8em;
+  color: #696969;
+}

@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>时间的朋友|数独</title>
+    <link href="images/favicon_books.ico" rel="shortcut icon" />
+    <link href="css/head.css" type="text/css" rel="stylesheet" />
+    <link href="css/default.css" type="text/css" rel="stylesheet" />
+    <link href="css/foot.css" type="text/css" rel="stylesheet" />
+    <!-- Use local Font Awesome 7 package (all styles bundled) -->
+    <link href="css/all.min.css" rel="stylesheet" />
+    <link href="css/font-awesome.min.css" rel="stylesheet" />
+
+    <script src="js/solver.js"></script>
+    <!-- Tesseract.js for client-side OCR -->
+    <script src="https://unpkg.com/tesseract.js@v2.1.4/dist/tesseract.min.js"></script>
+    <!-- OpenCV.js for grid detection/warping (optional, improves OCR accuracy) -->
+    <script async src="https://docs.opencv.org/3.4.0/opencv.js"></script>
+    <script src="js/ocr.js"></script>
+  </head>
+
+  <body>
+    <!--页头-->
+    <div class="head">
+      <i class="fa-solid fa-sort-numeric-asc" aria-hidden="true"></i> sudoku |
+      数独在线求解器
+    </div>
+    <div id="sudoku">
+      <div id="main">
+        <table>
+          <tr>
+            <td>
+              <br />
+              <canvas id="canvas1" width="541" height="541"
+                >Canvas is not supported by this browser.</canvas
+              >
+              <input id="tbSerial" title="数独框对应数字文本:" />
+              <input id="tbInputSerial" title="输入对应数字文本:" />
+              <br />
+            </td>
+
+            <td width="200px" id="tdButtons">
+              <div id="load" class="Applybtn">
+                <h2>开始游戏：</h2>
+                <label for="imgFile"
+                  >从图片载入数独：
+                  <span class="file-btn">选择图片</span></label
+                >
+                <input
+                  id="imgFile"
+                  type="file"
+                  accept="image/*"
+                  title="从图片载入数独"
+                />
+                <div id="ocrStatus"></div>
+                <div class="Modifybtn">
+                  <button onclick="clearThis()" title="清空当前">
+                    <i class="fa-solid fa-edit fa-lg" aria-hidden="true"></i> 修改
+                  </button>
+                  <button
+                    onclick="clearGame()"
+                    title="清空所有数据(用于新建题目时初始化)"
+                  >
+                    <i class="fa-solid fa-trash fa-lg" aria-hidden="true"></i>
+                    清空所有
+                  </button>
+
+                  <button
+                    onclick="loadText()"
+                    title="Loads the digits from the textbox below the board in order left to right, top to bottom. Click this after entering a problem to convert them to givens"
+                  >
+                    <i class="fa-solid fa-upload fa-lg" aria-hidden="true"></i> 载入
+                  </button>
+                </div>
+              </div>
+              <div class="Applybtn">
+                <div class="Modifybtn">
+                  <button
+                    id="btnAccept"
+                    onclick="acceptPossibles()"
+                    title="填入小的红色提示数字"
+                  >
+                    <i class="fa-solid fa-check fa-lg" aria-hidden="true"></i>
+                    唯一候选
+                  </button>
+                  <br />
+                  <button
+                    id="btnHint"
+                    onclick="hint()"
+                    title="填入当前选定单元格(浅红色背景)的正确答案"
+                  >
+                    <i class="fa-solid fa-lightbulb fa-lg" aria-hidden="true"></i>
+                    提示
+                  </button>
+                  <br />
+                  <button
+                    id="btnSolve"
+                    onclick="solve()"
+                    title="显示正确答案(如果题目有解)(程序耗时将显示在右下方)"
+                  >
+                    <i class="fa-solid fa-eye fa-lg" aria-hidden="true"></i> 答案
+                  </button>
+                  <br />
+                </div>
+
+                <div class="messageout">
+                  <input
+                    id="chbAllowed"
+                    type="checkbox"
+                    title="每个单元格显示的小数字即为允许数字"
+                  />
+                  显示允许数字
+                  <br /><input
+                    id="chbShowSingles"
+                    type="checkbox"
+                    title="每个单元格标示为红色的小数字即为唯一允许的数字"
+                  />
+                  标示唯一数字
+                  <br />
+                </div>
+              </div>
+              <div class="Applybtn">
+                <div class="Modifybtn">
+                  <button
+                    id="btnReset"
+                    onclick="reset()"
+                    title="清空用户输入的数字(题目不被清空)"
+                  >
+                    <i class="fa-solid fa-refresh fa-lg" aria-hidden="true"></i>
+                    重新答题
+                  </button>
+                  <br />
+
+                  <button id="btnUndo" onclick="undo()" title="重做上一步">
+                    <i class="fa-solid fa-undo fa-lg" aria-hidden="true"></i> 上一步
+                  </button>
+                  <br />
+                  <button
+                    id="btnToggleNote"
+                    class="icon-btn"
+                    title="切换 笔记模式"
+                    aria-pressed="false"
+                  >
+                    <i class="fa-solid fa-pencil fa-lg" aria-hidden="true"></i>
+                  </button>
+                </div>
+                <div id="divbackground">
+                  <!-- Replaced canvas with a 3x3 grid of digit buttons -->
+                  <div
+                    id="digitButtons"
+                    class="digit-grid"
+                    role="group"
+                    aria-label="Digit selector"
+                  >
+                    <button class="digit-btn" data-digit="1" title="选择数字 1">
+                      1
+                    </button>
+                    <button class="digit-btn" data-digit="2" title="选择数字 2">
+                      2
+                    </button>
+                    <button class="digit-btn" data-digit="3" title="选择数字 3">
+                      3
+                    </button>
+                    <button class="digit-btn" data-digit="4" title="选择数字 4">
+                      4
+                    </button>
+                    <button class="digit-btn" data-digit="5" title="选择数字 5">
+                      5
+                    </button>
+                    <button class="digit-btn" data-digit="6" title="选择数字 6">
+                      6
+                    </button>
+                    <button class="digit-btn" data-digit="7" title="选择数字 7">
+                      7
+                    </button>
+                    <button class="digit-btn" data-digit="8" title="选择数字 8">
+                      8
+                    </button>
+                    <button class="digit-btn" data-digit="9" title="选择数字 9">
+                      9
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div id="message"></div>
+            </td>
+          </tr>
+        </table>
+
+        <script type="text/javascript">
+          var CellSize = 60;
+          var SubCellSize = 18;
+
+          var canvas1 = document.getElementById("canvas1");
+          var canvas2 = document.getElementById("canvas2");
+          var chbAllowed = document.getElementById("chbAllowed");
+          var chbShowSingles = document.getElementById("chbShowSingles");
+          var tbSerial = document.getElementById("tbSerial");
+          // chbNote used to be a checkbox; we've removed the checkbox and keep
+          // an internal state object here. The visible toggle is the button
+          // with id 'btnToggleNote'.
+          var chbNote = { checked: false };
+          var btnToggleNote = document.getElementById("btnToggleNote");
+
+          var board1 = new Board();
+          var selectRow = 0;
+          var selectCol = 0;
+          var showAllowed = false;
+          var showSingles = false;
+          var showNotes = false;
+          var undoStack = Array();
+
+          function undo() {
+            var tos = undoStack.pop();
+            if (tos) {
+              board1 = tos;
+              updateUI();
+            }
+          }
+
+          function clearUndo() {
+            undoStack = Array();
+          }
+
+          function pushBoard() {
+            undoStack.push(board1.clone());
+          }
+
+          function checkStatus() {
+            if (!board1._isValid) message.innerHTML = "输入有误";
+            else if (board1._isSolved) message.innerHTML = "答题完毕";
+            else message.innerHTML = "";
+          }
+
+          function drawGrid() {
+            // Only ever called once!
+            var context = canvas1.getContext("2d");
+            context.strokeStyle = "#c00";
+            for (var i = 0; i <= BoardSize; i++) {
+              context.beginPath();
+              var thick = i % 3 == 0;
+              // Draw vertical lines
+              context.lineWidth = thick ? 2 : 1;
+              context.moveTo(i * CellSize + 0.5, 0.5);
+              context.lineTo(i * CellSize + 0.5, BoardSize * CellSize + 0.5);
+
+              // Draw horizontal lines
+              context.moveTo(0.5, i * CellSize + 0.5);
+              context.lineTo(BoardSize * CellSize + 0.5, i * CellSize + 0.5);
+              context.stroke();
+            }
+          }
+
+          function drawCells() {
+            var context = canvas1.getContext("2d");
+
+            context.font = "12pt Calibri"; // small text
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            var normalColor = "#aaaaaa";
+            var singleColor = "#ff143c";
+
+            // Highlight the selected cell's row, column and 3x3 square (box)
+            // Use a subtle background for row/col/box and a stronger color for the selected cell
+            try {
+              var rowHighlight = "#fff7e6"; // light row/col highlight
+              var boxHighlight = "#eef8ff"; // light box highlight
+              var selectedHighlight = "#ffe4e1"; // selected cell
+
+              // compute box origin
+              var boxRowStart = Math.floor(selectRow / 3) * 3;
+              var boxColStart = Math.floor(selectCol / 3) * 3;
+
+              for (var row = 0; row < BoardSize; row++) {
+                for (var col = 0; col < BoardSize; col++) {
+                  // skip drawing if nothing to highlight
+                  var isRow = row === selectRow;
+                  var isCol = col === selectCol;
+                  var isBox =
+                    row >= boxRowStart && row < boxRowStart + 3 &&
+                    col >= boxColStart && col < boxColStart + 3;
+                  if (!isRow && !isCol && !isBox) continue;
+
+                  var margin = 0; // leave grid lines intact
+                  context.beginPath();
+                  context.rect(
+                    col * CellSize + margin + 0.5,
+                    row * CellSize + margin + 0.5,
+                    CellSize - 2 * margin,
+                    CellSize - 2 * margin
+                  );
+
+                  // priority: selected cell > row/col > box
+                  if (row === selectRow && col === selectCol) context.fillStyle = selectedHighlight;
+                  else if (isRow || isCol) context.fillStyle = rowHighlight;
+                  else context.fillStyle = boxHighlight;
+
+                  context.fill();
+                }
+              }
+            } catch (e) {
+              // If highlighting fails, silently ignore and continue drawing rest
+              console.warn("Highlighting row/col/box failed", e);
+            }
+            context.fillStyle = "#999999"; // text color - light
+
+            // Draw allowed values or user notes (notes take precedence if present)
+            if (showAllowed)
+              for (var row = 0; row < BoardSize; row++)
+                for (var col = 0; col < BoardSize; col++) {
+                  var cell = board1.getCell(new Location(row, col));
+                  if (!cell.isAssigned()) {
+                    // If the user has added notes to this cell, show those; otherwise fall back to auto-calculated allowed
+                    var notesArray =
+                      (cell.getNotesArray && cell.getNotesArray()) || [];
+                    var allowedValues =
+                      notesArray.length > 0
+                        ? notesArray
+                        : cell._allowed.allowedValuesArray();
+                    cell.notes;
+                    for (var i = 0; i < allowedValues.length; i++) {
+                      var val = allowedValues[i];
+                      var x = (col + 0.5) * CellSize; // center of cell for textAlign center, textBaseline middle
+                      var y = (row + 0.5) * CellSize;
+                      var subRow = Math.floor((val - 1) / 3) - 1;
+                      var subCol = Math.floor((val - 1) % 3) - 1;
+                      x += subCol * SubCellSize;
+                      y += subRow * SubCellSize;
+                      var hiddenSingle =
+                        allowedValues.length != 1 && val == cell.getAnswer(); // naked single would have only one allowed value
+                      context.fillStyle = normalColor; // show hidden single in purple
+                      if (showSingles && val == cell.getAnswer())
+                        context.fillStyle = singleColor; // show hidden single in purple
+                      context.fillText(val, x, y);
+                    }
+                  }
+                }
+            else {
+              for (var row = 0; row < BoardSize; row++)
+                for (var col = 0; col < BoardSize; col++) {
+                  var cell = board1.getCell(new Location(row, col));
+                  var notesArray =
+                    (cell.getNotesArray && cell.getNotesArray()) || [];
+                  if (notesArray.length > 0) {
+                    // context.fillStyle = "#999999"; // gray color for notes
+                    context.fillStyle = normalColor;
+                    context.font = "12pt Calibri";
+                    for (var i = 0; i < notesArray.length; i++) {
+                      var note = notesArray[i];
+                      var x = (col + 0.5) * CellSize;
+                      var y = (row + 0.5) * CellSize;
+                      var subRow = Math.floor((note - 1) / 3) - 1;
+                      var subCol = Math.floor((note - 1) % 3) - 1;
+                      x += subCol * SubCellSize;
+                      y += subRow * SubCellSize;
+                      context.fillText(note, x, y);
+                    }
+                  }
+                }
+            }
+            // New if a digit is selected then make all cells with the same digit foreground red
+            var selectCell = board1.getCell(new Location(selectRow, selectCol));
+            var selectValue = selectCell.getValue();
+
+            // Draw values last
+            context.font = "32pt Calibri";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            var normalForeColor = "#191929";
+            var sameDigitForeColor = "#F91919";
+            context.fillStyle = normalForeColor; // text color - dark
+            for (var row = 0; row < BoardSize; row++)
+              for (var col = 0; col < BoardSize; col++) {
+                var cell = board1.getCell(new Location(row, col));
+                var x = (col + 0.5) * CellSize; // center of cell for textAlign center, textBaseline middle
+                var y = (row + 0.5) * CellSize;
+                var sameDigit =
+                  cell.getValue() == selectValue && selectValue != 0;
+                // Draw value
+                var value = cell.getValue();
+                if (value != 0) {
+                  context.fillStyle = cell.isGiven() ? "#2200aa" : "#696969"; // show "givens" in a darker color
+                  if (sameDigit)
+                    // then override
+                    context.fillStyle = sameDigitForeColor; // text color - dark
+                  context.fillText(value, x, y);
+                }
+              }
+          }
+
+          function drawCanvas() {
+            canvas1.width = canvas1.width;
+            drawGrid();
+            drawCells();
+          }
+
+          // Create a 9x9 editable HTML table to show/load OCR results
+          function createGridTable() {
+            var tbl = document.getElementById("gridTable");
+            if (!tbl) return;
+            tbl.innerHTML = "";
+            for (var r = 0; r < BoardSize; r++) {
+              var tr = document.createElement("tr");
+              for (var c = 0; c < BoardSize; c++) {
+                var td = document.createElement("td");
+                td.style.border = "1px solid #ccc";
+                td.style.width = "36px";
+                td.style.height = "36px";
+                td.style.textAlign = "center";
+                td.style.verticalAlign = "middle";
+                td.style.fontSize = "18px";
+                // make cells focusable and editable; we'll handle keyboard input explicitly
+                td.contentEditable = true;
+                td.tabIndex = 0;
+                td.className = "grid-cell";
+                td.dataset.row = r;
+                td.dataset.col = c;
+                // keyboard handling: digits, 0 -> clear, backspace/delete clear, arrow navigation
+                // visual focus is handled via CSS (.grid-cell:focus)
+                td.addEventListener("keydown", function (ev) {
+                  var key = ev.key;
+                  var tbl = document.getElementById("gridTable");
+                  var r = parseInt(this.dataset.row, 10),
+                    c = parseInt(this.dataset.col, 10);
+                  function focusAt(rr, cc) {
+                    var sel =
+                      "td[data-row='" + rr + "'][data-col='" + cc + "']";
+                    var node = tbl.querySelector(sel);
+                    if (node) node.focus();
+                  }
+
+                  // navigation
+                  if (key === "ArrowLeft") {
+                    ev.preventDefault();
+                    focusAt(r, (c + 8) % 9);
+                    return;
+                  }
+                  if (key === "ArrowRight") {
+                    ev.preventDefault();
+                    focusAt(r, (c + 1) % 9);
+                    return;
+                  }
+                  if (key === "ArrowUp") {
+                    ev.preventDefault();
+                    focusAt((r + 8) % 9, c);
+                    return;
+                  }
+                  if (key === "ArrowDown") {
+                    ev.preventDefault();
+                    focusAt((r + 1) % 9, c);
+                    return;
+                  }
+
+                  // clear with backspace/delete
+                  if (key === "Backspace" || key === "Delete") {
+                    ev.preventDefault();
+                    this.innerText = "";
+                    if (tbSerial) tbSerial.value = readTableToSerial();
+                    return;
+                  }
+
+                  // accept digits 1-9; treat '0' as clear
+                  if (/^[0-9]$/.test(key)) {
+                    ev.preventDefault();
+                    if (key === "0") this.innerText = "";
+                    else this.innerText = key;
+                    // update serial textbox
+                    if (tbSerial) tbSerial.value = readTableToSerial();
+                    // move focus right after entry
+                    var nc = (c + 1) % 9;
+                    var nr = nc === 0 ? (r + 1) % 9 : r;
+                    focusAt(nr, nc);
+                    return;
+                  }
+                  // ignore other keys
+                });
+                // also listen for paste/input events to sync tbSerial (covers mouse paste)
+                td.addEventListener("input", function () {
+                  if (tbSerial) tbSerial.value = readTableToSerial();
+                });
+                tr.appendChild(td);
+              }
+              tbl.appendChild(tr);
+            }
+          }
+
+          // Populate the table from an 81-char serial string (digits or .)
+          function populateTable(serial) {
+            if (!serial || serial.length !== BoardSize * BoardSize) return;
+            var tbl = document.getElementById("gridTable");
+            if (!tbl) return;
+            var cells = tbl.getElementsByTagName("td");
+            for (var i = 0; i < cells.length && i < serial.length; i++) {
+              var ch = serial.charAt(i);
+              cells[i].innerText = ch === "." ? "" : ch;
+            }
+          }
+
+          // Read table back to serial string (use '.' for empty)
+          function readTableToSerial() {
+            var tbl = document.getElementById("gridTable");
+            if (!tbl) return null;
+            var cells = tbl.getElementsByTagName("td");
+            var out = "";
+            for (var i = 0; i < cells.length; i++) {
+              var v = cells[i].innerText.trim();
+              if (v.length === 0) out += ".";
+              else {
+                var ch = v.charAt(0);
+                out += /^[0-9]$/.test(ch) ? ch : ".";
+              }
+            }
+            return out;
+          }
+
+          // Hook buttons for table operations
+          document.addEventListener("DOMContentLoaded", function () {
+            createGridTable();
+            var btnPop = document.getElementById("btnPopulateTable");
+            var btnApply = document.getElementById("btnApplyTable");
+            if (btnPop)
+              btnPop.onclick = function () {
+                populateTable(board1.toString());
+              };
+            if (btnApply)
+              btnApply.onclick = function () {
+                var s = readTableToSerial();
+                if (!s) return;
+                board1.setString(s);
+                updateUI();
+              };
+
+            // 定时自动保存：每 10 秒自动把当前棋盘和笔记保存到 localStorage 的 'sudoku_autosave'
+            try {
+              setInterval(function () {
+                try {
+                  // Use Board.serialize to centralize board state extraction
+                  var state = {};
+                  try {
+                    state = board1.serialize() || {};
+                  } catch (e) {
+                    state = { serial: board1.toString(), notes: [] };
+                  }
+                  state.options = {
+                    showAllowed: !!(chbAllowed && chbAllowed.checked),
+                    showSingles: !!(chbShowSingles && chbShowSingles.checked),
+                    showNotes: !!(chbNote && chbNote.checked),
+                  };
+                  state.ts = Date.now();
+                  localStorage.setItem(
+                    "sudoku_autosave",
+                    JSON.stringify(state)
+                  );
+                } catch (e) {
+                  /* ignore save errors */
+                }
+              }, 10000); // 10000ms = 10s
+            } catch (e) {
+              console.warn("Auto-save timer failed", e);
+            }
+
+            // Auto-load behavior on page open: prefer autosave, otherwise last named config
+            try {
+              var autos = localStorage.getItem("sudoku_autosave");
+              if (autos) {
+                var obj = JSON.parse(autos);
+                if (
+                  obj &&
+                  obj.serial &&
+                  obj.serial.length === BoardSize * BoardSize
+                ) {
+                  // restore option checkboxes first (if present)
+                  try {
+                    if (obj.options) {
+                      try {
+                        if (chbAllowed)
+                          chbAllowed.checked = !!obj.options.showAllowed;
+                      } catch (e) {}
+                      try {
+                        if (chbShowSingles)
+                          chbShowSingles.checked = !!obj.options.showSingles;
+                      } catch (e) {}
+                      try {
+                        if (chbNote) chbNote.checked = !!obj.options.showNotes;
+                        try {
+                          if (btnToggleNote)
+                            btnToggleNote.setAttribute(
+                              "aria-pressed",
+                              chbNote.checked ? "true" : "false"
+                            );
+                        } catch (e) {}
+                        try {
+                          if (btnToggleNote) {
+                            if (chbNote.checked)
+                              btnToggleNote.classList.add("active");
+                            else btnToggleNote.classList.remove("active");
+                          }
+                        } catch (e) {}
+                      } catch (e) {}
+                    }
+                  } catch (e) {
+                    console.warn("Restore options failed", e);
+                  }
+
+                  // Use Board.deserialize to restore board and notes
+                  try {
+                    var res = board1.deserialize(obj);
+                    if (res && res.foundNotes) {
+                      try {
+                        if (chbNote) chbNote.checked = true;
+                        try {
+                          if (btnToggleNote)
+                            btnToggleNote.setAttribute("aria-pressed", "true");
+                        } catch (e) {}
+                        try {
+                          if (btnToggleNote)
+                            btnToggleNote.classList.add("active");
+                        } catch (e) {}
+                      } catch (e) {}
+                      showNotes = true;
+                    }
+                  } catch (e) {
+                    console.warn("Board.deserialize failed", e);
+                  }
+                  // Refresh UI after restoring notes and flags
+                  readOptions();
+                  updateUI();
+                }
+              }
+              // 如果没有 autosave，则保持在 upload 页面，等待用户加载或手动操作。
+            } catch (e) {
+              console.warn("Auto-load failed", e);
+            }
+
+            // Auto-save on close: store current board serial and last selected config name
+            window.addEventListener("beforeunload", function () {
+              try {
+                var state = {};
+                try {
+                  state = board1.serialize() || {};
+                } catch (e) {
+                  state = { serial: board1.toString(), notes: [] };
+                }
+                state.ts = Date.now();
+                localStorage.setItem("sudoku_autosave", JSON.stringify(state));
+              } catch (e) {}
+            });
+          });
+
+          function updateUI() {
+            drawCanvas();
+            checkStatus();
+            tbSerial.value = board1.toString();
+            // Refresh digit buttons enabled/disabled state based on current board
+            try {
+              if (typeof updateDigitButtonsState === "function") updateDigitButtonsState();
+            } catch (e) {}
+          }
+
+          // Disable/enable digit buttons when the corresponding digit has been placed 9 times
+          function updateDigitButtonsState() {
+            try {
+              var serial = board1.toString();
+              var buttons = document.querySelectorAll(".digit-btn");
+              if (!buttons) return;
+              buttons.forEach(function (btn) {
+                var d = String(btn.dataset.digit || btn.getAttribute("data-digit") || "");
+                if (!d) return;
+                var count = 0;
+                for (var i = 0; i < serial.length; i++) if (serial.charAt(i) === d) count++;
+                if (count >= 9) {
+                  btn.disabled = true;
+                  btn.classList.add("disabled");
+                  btn.setAttribute("aria-disabled", "true");
+                } else {
+                  btn.disabled = false;
+                  btn.classList.remove("disabled");
+                  btn.setAttribute("aria-disabled", "false");
+                }
+              });
+            } catch (e) {
+              console.warn("updateDigitButtonsState failed", e);
+            }
+          }
+
+          function readOptions() {
+            showAllowed = chbAllowed.checked;
+            showSingles = chbShowSingles.checked;
+            showNotes = chbNote.checked;
+            drawCanvas();
+          }
+
+          chbAllowed.onclick = readOptions;
+          chbShowSingles.onclick = readOptions;
+          // wire up icon button as the sole toggle for note mode
+          if (btnToggleNote) {
+            btnToggleNote.addEventListener("click", function () {
+              try {
+                chbNote.checked = !chbNote.checked;
+                // update aria and visual state
+                try {
+                  btnToggleNote.setAttribute(
+                    "aria-pressed",
+                    chbNote.checked ? "true" : "false"
+                  );
+                } catch (e) {}
+                try {
+                  if (chbNote.checked) btnToggleNote.classList.add("active");
+                  else btnToggleNote.classList.remove("active");
+                } catch (e) {}
+                readOptions();
+              } catch (e) {}
+            });
+          }
+
+          function selectCell(row, col) {
+            selectRow = row;
+            selectCol = col;
+            drawCanvas();
+          }
+
+          function moveSelection(row, col) {
+            selectRow += row;
+            selectCol += col;
+            if (selectRow < 0) selectRow = 8;
+            else if (selectRow > 8) selectRow = 0;
+            if (selectCol < 0) selectCol = 8;
+            else if (selectCol > 8) selectCol = 0;
+            drawCanvas();
+          }
+
+          // Clear same-digit notes in row, column and square after placing a digit
+          function clearNotesForPlacedDigit(row, col, digit) {
+            if (!digit || digit < 1 || digit > 9) return;
+            var seen = {}; // avoid duplicate processing
+            var base = new Location(row, col);
+
+            function processLocs(locs) {
+              for (var i = 0; i < locs.length; i++) {
+                var l = locs[i];
+                var key = l.row + "," + l.col;
+                if (seen[key]) continue;
+                seen[key] = true;
+                try {
+                  var c = board1.getCell(l);
+                  if (!c) continue;
+                  // skip assigned cells
+                  if (c.isAssigned()) continue;
+                  // if this cell has a notes object and the digit is present, remove it
+                  if (
+                    c._notes &&
+                    typeof c._notes.isAllowed === "function" &&
+                    c._notes.isAllowed(digit)
+                  ) {
+                    try {
+                      c._notes.remove(digit);
+                    } catch (e) {
+                      /* ignore */
+                    }
+                  }
+                } catch (e) {
+                  /* ignore per-cell errors */
+                }
+              }
+            }
+
+            // process row siblings, col siblings and square siblings
+            processLocs(base.rowSibs());
+            processLocs(base.colSibs());
+            processLocs(base.squareSibs());
+          }
+
+          function setDigitInCell(digit) {
+            var cell = board1.getCell(new Location(selectRow, selectCol));
+            message.innerHTML = "";
+            if (cell.isGiven()) return;
+            // If note mode is active, toggle a pencil note instead of assigning a value
+            if (chbNote && chbNote.checked) {
+              pushBoard();
+              if (digit == 0) {
+                // clear all notes for this cell
+                cell._notes = new AllowedValues(0);
+                console.log(
+                  "Note mode: cleared notes at",
+                  selectRow,
+                  selectCol
+                );
+                message.innerText = "已清除该格笔记";
+              } else {
+                cell.toggleNote(digit);
+                message.innerText =
+                  "笔记已更新: " + cell.getNotesArray().join(",");
+              }
+              updateUI();
+              return;
+            }
+
+            if (digit != 0 && !cell.isAllowed(digit)) {
+              message.innerHTML = "输入有误";
+              return;
+            }
+            pushBoard();
+            cell.setValue(digit);
+            // After placing a digit, remove that digit from pencil notes in same row/col/box
+            try {
+              clearNotesForPlacedDigit(selectRow, selectCol, digit);
+            } catch (e) {}
+            board1.updateAllowed();
+            updateUI();
+          }
+
+          canvas1.onmousedown = function canvasMouseDown(ev) {
+            var x = ev.pageX - this.offsetLeft;
+            var y = ev.pageY - this.offsetTop;
+            var coords = this.relMouseCoords(ev);
+            selectCell(
+              Math.floor(coords.y / CellSize),
+              Math.floor(coords.x / CellSize)
+            );
+          };
+
+          document.onkeydown = function (ev) {
+            switch (ev.keyCode) {
+              case 37: // left arrow
+                moveSelection(0, -1);
+                break;
+              case 38: // up arrow
+                moveSelection(-1, 0);
+                break;
+              case 39: // right arrow
+                moveSelection(0, 1);
+                break;
+              case 40: // down arrow
+                moveSelection(1, 0);
+                break;
+              default:
+                var key = Number(ev.keyCode);
+                var digit = key >= 96 ? key - 96 : key - 48; // handle keypad digits as well
+                if (digit >= 0 && digit <= 9) setDigitInCell(digit);
+                break;
+            }
+          };
+
+          function loadText() {
+            var ret = board1.setString(tbSerial.value);
+            updateUI();
+            if (!ret) message.innerHTML = "不是81个数字";
+          }
+
+          function clearGame() {
+            clearUndo();
+            board1.clear();
+            updateUI();
+          }
+          function clearThis() {
+            clearUndo();
+            var selectCell = board1.getCell(new Location(selectRow, selectCol));
+            selectCell.clear();
+            updateUI();
+          }
+          function acceptPossibles() {
+            pushBoard();
+            board1.acceptPossibles();
+            board1.updateAllowed();
+            updateUI();
+          }
+
+          function hint() {
+            // First check if we had calculated a solution, if not do so now
+            solution = board1.clone();
+            if (solution.trySolve(Location.empty, 0)) {
+              // There is a solution to the board from its current state
+              var cell = solution.getCell(new Location(selectRow, selectCol));
+              if (!cell.isGiven()) setDigitInCell(cell.getValue());
+            }
+          }
+
+          function reset() {
+            clearUndo();
+            board1.reset();
+            updateUI();
+          }
+
+          function solve() {
+            pushBoard();
+            var start = Date.now();
+            // First, attempt to find one solution on a clone so we don't modify the current board yet
+            var solution = board1.clone();
+            var hasSolution = false;
+            try {
+              hasSolution = solution.trySolve(Location.empty, 0);
+            } catch (e) {
+              hasSolution = false;
+            }
+            var solveTime = Date.now() - start;
+            if (!hasSolution) {
+              // No solution
+              message.innerHTML = "无解 (搜索耗时: " + solveTime + " ms)";
+              return;
+            }
+
+            // Count solutions up to 2 to determine uniqueness. Use a fresh clone for counting.
+            var countStart = Date.now();
+            var count = 0;
+            try {
+              count = board1.clone().countSolutions(2);
+            } catch (e) {
+              count = 1; // fallback: assume at least one if counting failed
+            }
+            var countTime = Date.now() - countStart;
+
+            // Copy the found solution into the visible board and update UI
+            try {
+              solution.copyTo(board1);
+            } catch (e) {
+              try {
+                board1.setString(solution.toString());
+              } catch (e2) {}
+            }
+            updateUI();
+
+            if (count === 1) {
+              message.innerHTML = "唯一解 (求解耗时: " + solveTime + " ms)";
+            } else if (count > 1) {
+              message.innerHTML =
+                "存在多个解（至少 " +
+                count +
+                " 个），已显示其中一个解。求解耗时: " +
+                solveTime +
+                " ms；判定唯一性耗时: " +
+                countTime +
+                " ms";
+            } else {
+              // Shouldn't happen, but handle defensively
+              message.innerHTML = "已显示解 (检测到 0 个解? 请检查)。";
+            }
+          }
+
+          //http://magictour.free.fr/sudoku.htm for list of hard Sudoku puzzles
+          // http://www.sudokuwiki.org/sudoku.htm good on-line solver accepting serial format
+          //board1.setString("7.8...3.....2.1...5.........4.....263...8.......1...9..9.6....4....7.5..........."); //very hard
+          // board1.setString(
+          //   "7.8...3.....2.1...5..7..2...4.....263.948...7...1...9..9.6....4....7.5....5......"
+          // ); // medium
+          updateUI();
+
+          // Initialize the 3x3 HTML digit buttons added in the DOM
+          function initDigitButtons() {
+            try {
+              var buttons = document.querySelectorAll(".digit-btn");
+              if (!buttons || buttons.length === 0) return;
+              buttons.forEach(function (btn) {
+                btn.addEventListener("click", function (ev) {
+                  ev.preventDefault();
+                  var d = parseInt(this.dataset.digit, 10) || 0;
+                  // visual feedback: mark selected briefly
+                  buttons.forEach(function (b) {
+                    b.classList.remove("selected");
+                  });
+                  this.classList.add("selected");
+                  setTimeout(
+                    (function (el) {
+                      return function () {
+                        el.classList.remove("selected");
+                      };
+                    })(this),
+                    180
+                  );
+                  // call existing logic to set digit in current selected cell
+                  try {
+                    setDigitInCell(d);
+                  } catch (e) {
+                    console.warn("setDigitInCell failed", e);
+                  }
+                });
+              });
+            } catch (e) {
+              console.warn("initDigitButtons failed", e);
+            }
+          }
+          initDigitButtons();
+
+          // tbInputSerial: when user types/pastes 81 chars, load into board
+          (function setupInputSerial() {
+            try {
+              var tbInput = document.getElementById("tbInputSerial");
+              function applyInputSerial() {
+                if (!tbInput) return;
+                var raw = tbInput.value || "";
+                // keep digits and dots only
+                var s = raw.replace(/[^0-9\.]/g, "");
+                if (s.length !== 81) {
+                  message.innerText = "请输入 81 个数字 (0 或 . 表示空格)";
+                  return false;
+                }
+                // Normalize '0' to '.' for empty cells in setString
+                s = s.replace(/0/g, ".");
+                var ok = board1.setString(s);
+                if (!ok) {
+                  message.innerText = "输入格式不正确，无法解析为数独。";
+                  return false;
+                }
+                message.innerText = "已载入输入的棋盘";
+                updateUI();
+                return true;
+              }
+              if (tbInput) {
+                tbInput.addEventListener("keydown", function (ev) {
+                  if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    applyInputSerial();
+                  }
+                });
+                // auto-apply when exactly 81 characters pasted/typed
+                tbInput.addEventListener("input", function () {
+                  var raw = tbInput.value || "";
+                  var s = raw.replace(/[^0-9\.]/g, "");
+                  if (s.length === 81) applyInputSerial();
+                });
+              }
+            } catch (e) {
+              console.warn("setupInputSerial failed", e);
+            }
+          })();
+        </script>
+      </div>
+    </div>
+  </body>
+</html>
