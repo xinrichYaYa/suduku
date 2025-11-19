@@ -1,5 +1,9 @@
 // Simple client-side OCR loader for Sudoku images
 // Requires Tesseract.js to be loaded first (we include via CDN in index.html)
+/** @type {any} */
+var Tesseract;
+/** @type {any} */
+var cv;
 
 (function() {
   // helper: draw image to canvas and scale to target size while preserving aspect
@@ -237,80 +241,4 @@
       }
     });
   }
-
-  // Wire up UI
-  document.addEventListener('DOMContentLoaded', function(){
-    var imgFile = document.getElementById('imgFile');
-    var canvasImg = document.getElementById('canvasImg');
-    var statusEl = document.getElementById('ocrStatus');
-    // If the preview canvas is missing from the page, create an off-screen canvas
-    // and do NOT insert it into the DOM — user requested no preview.
-    if (!canvasImg) {
-      canvasImg = document.createElement('canvas');
-      canvasImg.width = 541; canvasImg.height = 541;
-      // do not append to document to avoid visible preview
-    }
-    // If status element is missing, use a lightweight in-memory object so code can
-    // write statusEl.innerText without affecting the page.
-    if (!statusEl) {
-      statusEl = { innerText: '' };
-    }
-    if (!imgFile) return;
-    // Note: UI-related toggle button handling is implemented in the main page script.
-
-    var loadedImage = null;
-    imgFile.addEventListener('change', function(ev){
-      var f = ev.target.files && ev.target.files[0];
-      if (!f) return;
-      var reader = new FileReader();
-      reader.onload = function(e){
-        var img = new Image();
-        img.onload = function(){
-          loadedImage = img;
-          drawImageToCanvas(img, canvasImg);
-          recognize();
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(f);
-    });
-
-    async function recognize(){
-      if (!loadedImage) { statusEl.innerText = '请先选择图片文件'; return; }
-      statusEl.innerText = '开始识别：尝试检测并矫正棋盘...';
-      try {
-        // Try to detect and warp the grid using OpenCV; fall back to preview canvas if detection fails
-        var warpCanvas = null;
-        try {
-          warpCanvas = await detectAndWarpGrid(canvasImg, canvasImg.width, canvasImg.height, statusEl);
-        } catch (e) {
-          console.warn('Grid detection failed', e);
-          warpCanvas = null;
-        }
-        var sourceForOCR = warpCanvas || canvasImg;
-        if (warpCanvas) statusEl.innerText = '棋盘已检测并校正，开始识别单元格...';
-        else statusEl.innerText = '未能自动检测棋盘，直接按当前预览识别（准确率较低）';
-        var serial = await recognizeGridFromCanvas(sourceForOCR, statusEl);
-        // convert digits to expected format: digits or '.'; board.setString expects '.' or digit
-        // ensure length 81
-        if (serial.length != 81) {
-          statusEl.innerText = '识别结果长度不是81，载入失败';
-          return;
-        }
-        // set into board
-        var ok = board1.setString(serial);
-        if (ok) {
-          updateUI();
-          // Also populate HTML table if available
-          try { if (typeof window.populateTable === 'function') window.populateTable(serial); else if (typeof populateTable === 'function') populateTable(serial); } catch(e){}
-          statusEl.innerText = '已载入棋盘（注意：识别可能有错误，请检查）';        
-        } else {
-          statusEl.innerText = '载入失败：setString 返回 false';
-        }
-      } catch (e) {
-        console.error(e);
-        statusEl.innerText = '识别过程中发生错误，查看控制台';
-      }
-    }
-  });
 })();

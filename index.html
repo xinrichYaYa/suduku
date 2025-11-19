@@ -2,6 +2,7 @@
 <html lang="zh">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>时间的朋友|数独</title>
     <link href="images/favicon_books.ico" rel="shortcut icon" />
     <link href="css/head.css" type="text/css" rel="stylesheet" />
@@ -13,7 +14,7 @@
 
     <script src="js/solver.js"></script>
     <!-- Tesseract.js for client-side OCR -->
-    <script src="https://unpkg.com/tesseract.js@v2.1.4/dist/tesseract.min.js"></script>
+    <script src="./js/tesseract.min.js"></script>
     <!-- OpenCV.js for grid detection/warping (optional, improves OCR accuracy) -->
     <script async src="https://docs.opencv.org/3.4.0/opencv.js"></script>
     <script src="js/ocr.js"></script>
@@ -26,53 +27,77 @@
       数独在线求解器
     </div>
     <div id="sudoku">
+      <div style="display: flex">
+        <div id="load" class="Applybtn">
+          <h2>开始游戏：</h2>
+          <label for="imgFile"
+            >从图片载入数独： <span class="file-btn">选择图片</span></label
+          >
+          <input
+            id="imgFile"
+            type="file"
+            accept="image/*"
+            title="从图片载入数独"
+          />
+          <div id="ocrStatus"></div>
+          <div class="Modifybtn">
+            <button onclick="clearThis()" title="清空当前">
+              <i class="fa-solid fa-edit fa-lg" aria-hidden="true"></i> 修改
+            </button>
+            <button
+              onclick="clearGame()"
+              title="清空所有数据(用于新建题目时初始化)"
+            >
+              <i class="fa-solid fa-trash fa-lg" aria-hidden="true"></i>
+              清空所有
+            </button>
+
+            <button
+              onclick="loadText()"
+              title="Loads the digits from the textbox below the board in order left to right, top to bottom. Click this after entering a problem to convert them to givens"
+            >
+              <i class="fa-solid fa-upload fa-lg" aria-hidden="true"></i> 载入
+            </button>
+          </div>
+          <input id="tbInputSerial" title="输入对应数字文本:" />
+        </div>
+        <div class="Applybtn">
+          <h2>生成题目</h2>
+          <div class="generate-controls">
+            <label for="puzzleCluesRange"
+              >线索数: <span id="puzzleCluesLabel">30</span></label
+            >
+            <input
+              id="puzzleCluesRange"
+              type="range"
+              min="17"
+              max="81"
+              value="30"
+            />
+            <button id="btnGeneratePuzzle" title="生成新的题目">
+              <i class="fa-solid fa-dice fa-lg" aria-hidden="true"></i> 生成题目
+            </button>
+          </div>
+          <div id="generateStatus" class="extraInfo"></div>
+        </div>
+      </div>
       <div id="main">
         <table>
           <tr>
             <td>
               <br />
-              <canvas id="canvas1" width="541" height="541"
+              <canvas
+                id="canvas1"
+                width="541"
+                height="541"
+                style="margin: 0 20px 0 10px"
                 >Canvas is not supported by this browser.</canvas
               >
               <input id="tbSerial" title="数独框对应数字文本:" />
-              <input id="tbInputSerial" title="输入对应数字文本:" />
               <br />
             </td>
 
             <td width="200px" id="tdButtons">
-              <div id="load" class="Applybtn">
-                <h2>开始游戏：</h2>
-                <label for="imgFile"
-                  >从图片载入数独：
-                  <span class="file-btn">选择图片</span></label
-                >
-                <input
-                  id="imgFile"
-                  type="file"
-                  accept="image/*"
-                  title="从图片载入数独"
-                />
-                <div id="ocrStatus"></div>
-                <div class="Modifybtn">
-                  <button onclick="clearThis()" title="清空当前">
-                    <i class="fa-solid fa-edit fa-lg" aria-hidden="true"></i> 修改
-                  </button>
-                  <button
-                    onclick="clearGame()"
-                    title="清空所有数据(用于新建题目时初始化)"
-                  >
-                    <i class="fa-solid fa-trash fa-lg" aria-hidden="true"></i>
-                    清空所有
-                  </button>
-
-                  <button
-                    onclick="loadText()"
-                    title="Loads the digits from the textbox below the board in order left to right, top to bottom. Click this after entering a problem to convert them to givens"
-                  >
-                    <i class="fa-solid fa-upload fa-lg" aria-hidden="true"></i> 载入
-                  </button>
-                </div>
-              </div>
               <div class="Applybtn">
                 <div class="Modifybtn">
                   <button
@@ -89,7 +114,10 @@
                     onclick="hint()"
                     title="填入当前选定单元格(浅红色背景)的正确答案"
                   >
-                    <i class="fa-solid fa-lightbulb fa-lg" aria-hidden="true"></i>
+                    <i
+                      class="fa-solid fa-lightbulb fa-lg"
+                      aria-hidden="true"
+                    ></i>
                     提示
                   </button>
                   <br />
@@ -98,7 +126,8 @@
                     onclick="solve()"
                     title="显示正确答案(如果题目有解)(程序耗时将显示在右下方)"
                   >
-                    <i class="fa-solid fa-eye fa-lg" aria-hidden="true"></i> 答案
+                    <i class="fa-solid fa-eye fa-lg" aria-hidden="true"></i>
+                    答案
                   </button>
                   <br />
                 </div>
@@ -119,7 +148,14 @@
                   <br />
                 </div>
               </div>
+              <div id="timer" class="extraInfo">计时: 00:00</div>
               <div class="Applybtn">
+                <div class="Modifybtn">
+                  <button id="btnPause" onclick="pauseTimer()" title="暂停">
+                    <i class="fa-solid fa-pause fa-lg" aria-hidden="true"></i>
+                    暂停计时
+                  </button>
+                </div>
                 <div class="Modifybtn">
                   <button
                     id="btnReset"
@@ -132,7 +168,8 @@
                   <br />
 
                   <button id="btnUndo" onclick="undo()" title="重做上一步">
-                    <i class="fa-solid fa-undo fa-lg" aria-hidden="true"></i> 上一步
+                    <i class="fa-solid fa-undo fa-lg" aria-hidden="true"></i>
+                    上一步
                   </button>
                   <br />
                   <button
@@ -186,7 +223,6 @@
             </td>
           </tr>
         </table>
-
         <script type="text/javascript">
           var CellSize = 60;
           var SubCellSize = 18;
@@ -209,6 +245,8 @@
           var showSingles = false;
           var showNotes = false;
           var undoStack = Array();
+
+          var _isRunning = false;
 
           function undo() {
             var tos = undoStack.pop();
@@ -277,8 +315,10 @@
                   var isRow = row === selectRow;
                   var isCol = col === selectCol;
                   var isBox =
-                    row >= boxRowStart && row < boxRowStart + 3 &&
-                    col >= boxColStart && col < boxColStart + 3;
+                    row >= boxRowStart &&
+                    row < boxRowStart + 3 &&
+                    col >= boxColStart &&
+                    col < boxColStart + 3;
                   if (!isRow && !isCol && !isBox) continue;
 
                   var margin = 0; // leave grid lines intact
@@ -291,7 +331,8 @@
                   );
 
                   // priority: selected cell > row/col > box
-                  if (row === selectRow && col === selectCol) context.fillStyle = selectedHighlight;
+                  if (row === selectRow && col === selectCol)
+                    context.fillStyle = selectedHighlight;
                   else if (isRow || isCol) context.fillStyle = rowHighlight;
                   else context.fillStyle = boxHighlight;
 
@@ -308,7 +349,7 @@
             if (showAllowed)
               for (var row = 0; row < BoardSize; row++)
                 for (var col = 0; col < BoardSize; col++) {
-                  var cell = board1.getCell(new Location(row, col));
+                  var cell = board1.getCell(new CellLocation(row, col));
                   if (!cell.isAssigned()) {
                     // If the user has added notes to this cell, show those; otherwise fall back to auto-calculated allowed
                     var notesArray =
@@ -338,7 +379,7 @@
             else {
               for (var row = 0; row < BoardSize; row++)
                 for (var col = 0; col < BoardSize; col++) {
-                  var cell = board1.getCell(new Location(row, col));
+                  var cell = board1.getCell(new CellLocation(row, col));
                   var notesArray =
                     (cell.getNotesArray && cell.getNotesArray()) || [];
                   if (notesArray.length > 0) {
@@ -359,7 +400,9 @@
                 }
             }
             // New if a digit is selected then make all cells with the same digit foreground red
-            var selectCell = board1.getCell(new Location(selectRow, selectCol));
+            var selectCell = board1.getCell(
+              new CellLocation(selectRow, selectCol)
+            );
             var selectValue = selectCell.getValue();
 
             // Draw values last
@@ -371,7 +414,7 @@
             context.fillStyle = normalForeColor; // text color - dark
             for (var row = 0; row < BoardSize; row++)
               for (var col = 0; col < BoardSize; col++) {
-                var cell = board1.getCell(new Location(row, col));
+                var cell = board1.getCell(new CellLocation(row, col));
                 var x = (col + 0.5) * CellSize; // center of cell for textAlign center, textBaseline middle
                 var y = (row + 0.5) * CellSize;
                 var sameDigit =
@@ -518,6 +561,102 @@
             createGridTable();
             var btnPop = document.getElementById("btnPopulateTable");
             var btnApply = document.getElementById("btnApplyTable");
+
+            var imgFile = document.getElementById("imgFile");
+            var canvasImg = document.getElementById("canvasImg");
+            var statusEl = document.getElementById("ocrStatus");
+
+            // If the preview canvas is missing from the page, create an off-screen canvas
+            // and do NOT insert it into the DOM — user requested no preview.
+            if (!canvasImg) {
+              canvasImg = document.createElement("canvas");
+              canvasImg.width = 541;
+              canvasImg.height = 541;
+              // do not append to document to avoid visible preview
+            }
+            // If status element is missing, use a lightweight in-memory object so code can
+            // write statusEl.innerText without affecting the page.
+            if (!statusEl) {
+              statusEl = { innerText: "" };
+            }
+            if (!imgFile) return;
+            // Note: UI-related toggle button handling is implemented in the main page script.
+
+            var loadedImage = null;
+            imgFile.addEventListener("change", function (ev) {
+              var f = ev.target.files && ev.target.files[0];
+              if (!f) return;
+              var reader = new FileReader();
+              reader.onload = function (e) {
+                var img = new Image();
+                img.onload = function () {
+                  loadedImage = img;
+                  drawImageToCanvas(img, canvasImg);
+                  recognize();
+                };
+                img.src = e.target.result;
+              };
+              reader.readAsDataURL(f);
+            });
+
+            async function recognize() {
+              if (!loadedImage) {
+                statusEl.innerText = "请先选择图片文件";
+                return;
+              }
+              statusEl.innerText = "开始识别：尝试检测并矫正棋盘...";
+              try {
+                // Try to detect and warp the grid using OpenCV; fall back to preview canvas if detection fails
+                var warpCanvas = null;
+                try {
+                  warpCanvas = await detectAndWarpGrid(
+                    canvasImg,
+                    canvasImg.width,
+                    canvasImg.height,
+                    statusEl
+                  );
+                } catch (e) {
+                  console.warn("Grid detection failed", e);
+                  warpCanvas = null;
+                }
+                var sourceForOCR = warpCanvas || canvasImg;
+                if (warpCanvas)
+                  statusEl.innerText = "棋盘已检测并校正，开始识别单元格...";
+                else
+                  statusEl.innerText =
+                    "未能自动检测棋盘，直接按当前预览识别（准确率较低）";
+                var serial = await recognizeGridFromCanvas(
+                  sourceForOCR,
+                  statusEl
+                );
+                // convert digits to expected format: digits or '.'; board.setString expects '.' or digit
+                // ensure length 81
+                if (serial.length != 81) {
+                  statusEl.innerText = "识别结果长度不是81，载入失败";
+                  return;
+                }
+                // set into board
+                var ok = board1.setString(serial);
+                if (ok) {
+                  updateUI();
+                  // Also populate HTML table if available
+                  try {
+                    if (typeof window.populateTable === "function")
+                      window.populateTable(serial);
+                    else if (typeof populateTable === "function")
+                      populateTable(serial);
+                  } catch (e) {}
+                  statusEl.innerText =
+                    "已载入棋盘（注意：识别可能有错误，请检查）";
+                } else {
+                  statusEl.innerText = "载入失败：setString 返回 false";
+                }
+              } catch (e) {
+                console.error(e);
+                statusEl.innerText = "识别过程中发生错误，查看控制台";
+              }
+            }
+
             if (btnPop)
               btnPop.onclick = function () {
                 populateTable(board1.toString());
@@ -546,6 +685,8 @@
                     showSingles: !!(chbShowSingles && chbShowSingles.checked),
                     showNotes: !!(chbNote && chbNote.checked),
                   };
+                  // state.startTimer = _timerStart;
+                  state.timerElapsed = _elapsed;
                   state.ts = Date.now();
                   localStorage.setItem(
                     "sudoku_autosave",
@@ -622,6 +763,19 @@
                   } catch (e) {
                     console.warn("Board.deserialize failed", e);
                   }
+
+                  try {
+                    if (
+                      obj.timerElapsed &&
+                      typeof obj.timerElapsed === "number"
+                    )
+                      _elapsed = obj.timerElapsed;
+                    // updateTimerDisplay();
+                    continueTimer();
+                    _isRunning = true;
+                  } catch (e) {
+                    console.warn("Board.deserialize failed", e);
+                  }
                   // Refresh UI after restoring notes and flags
                   readOptions();
                   updateUI();
@@ -642,6 +796,8 @@
                   state = { serial: board1.toString(), notes: [] };
                 }
                 state.ts = Date.now();
+                // state.startTimer = _timerStart;
+                state.timerElapsed = _elapsed;
                 localStorage.setItem("sudoku_autosave", JSON.stringify(state));
               } catch (e) {}
             });
@@ -653,7 +809,8 @@
             tbSerial.value = board1.toString();
             // Refresh digit buttons enabled/disabled state based on current board
             try {
-              if (typeof updateDigitButtonsState === "function") updateDigitButtonsState();
+              if (typeof updateDigitButtonsState === "function")
+                updateDigitButtonsState();
             } catch (e) {}
           }
 
@@ -664,10 +821,13 @@
               var buttons = document.querySelectorAll(".digit-btn");
               if (!buttons) return;
               buttons.forEach(function (btn) {
-                var d = String(btn.dataset.digit || btn.getAttribute("data-digit") || "");
+                var d = String(
+                  btn.dataset.digit || btn.getAttribute("data-digit") || ""
+                );
                 if (!d) return;
                 var count = 0;
-                for (var i = 0; i < serial.length; i++) if (serial.charAt(i) === d) count++;
+                for (var i = 0; i < serial.length; i++)
+                  if (serial.charAt(i) === d) count++;
                 if (count >= 9) {
                   btn.disabled = true;
                   btn.classList.add("disabled");
@@ -733,7 +893,7 @@
           function clearNotesForPlacedDigit(row, col, digit) {
             if (!digit || digit < 1 || digit > 9) return;
             var seen = {}; // avoid duplicate processing
-            var base = new Location(row, col);
+            var base = new CellLocation(row, col);
 
             function processLocs(locs) {
               for (var i = 0; i < locs.length; i++) {
@@ -771,7 +931,7 @@
           }
 
           function setDigitInCell(digit) {
-            var cell = board1.getCell(new Location(selectRow, selectCol));
+            var cell = board1.getCell(new CellLocation(selectRow, selectCol));
             message.innerHTML = "";
             if (cell.isGiven()) return;
             // If note mode is active, toggle a pencil note instead of assigning a value
@@ -845,16 +1005,26 @@
             var ret = board1.setString(tbSerial.value);
             updateUI();
             if (!ret) message.innerHTML = "不是81个数字";
+            else {
+              try {
+                startTimer();
+              } catch (e) {}
+            }
           }
 
           function clearGame() {
             clearUndo();
             board1.clear();
             updateUI();
+            try {
+              stopTimer();
+            } catch (e) {}
           }
           function clearThis() {
             clearUndo();
-            var selectCell = board1.getCell(new Location(selectRow, selectCol));
+            var selectCell = board1.getCell(
+              new CellLocation(selectRow, selectCol)
+            );
             selectCell.clear();
             updateUI();
           }
@@ -868,9 +1038,11 @@
           function hint() {
             // First check if we had calculated a solution, if not do so now
             solution = board1.clone();
-            if (solution.trySolve(Location.empty, 0)) {
+            if (solution.trySolve(CellLocation.empty, 0)) {
               // There is a solution to the board from its current state
-              var cell = solution.getCell(new Location(selectRow, selectCol));
+              var cell = solution.getCell(
+                new CellLocation(selectRow, selectCol)
+              );
               if (!cell.isGiven()) setDigitInCell(cell.getValue());
             }
           }
@@ -888,7 +1060,7 @@
             var solution = board1.clone();
             var hasSolution = false;
             try {
-              hasSolution = solution.trySolve(Location.empty, 0);
+              hasSolution = solution.trySolve(CellLocation.empty, 0);
             } catch (e) {
               hasSolution = false;
             }
@@ -980,6 +1152,68 @@
           }
           initDigitButtons();
 
+          // Setup puzzle generation controls and handlers
+          function setupGenerateUI() {
+            try {
+              var range = document.getElementById("puzzleCluesRange");
+              var label = document.getElementById("puzzleCluesLabel");
+              var btn = document.getElementById("btnGeneratePuzzle");
+              var status = document.getElementById("generateStatus");
+              if (range && label) {
+                label.innerText = range.value;
+                range.addEventListener("input", function () {
+                  label.innerText = this.value;
+                });
+              }
+              if (!btn) return;
+              btn.addEventListener("click", function () {
+                try {
+                  btn.disabled = true;
+                  btn.classList.add("disabled");
+                  status.innerText = "正在生成题目，请稍候……";
+                  message.innerText = "";
+                  // allow UI to update before heavy work
+                  setTimeout(function () {
+                    var desired = 30;
+                    try {
+                      var r = document.getElementById("puzzleCluesRange");
+                      if (r) desired = Number(r.value) || desired;
+                    } catch (e) {}
+                    var t0 = Date.now();
+                    try {
+                      var res = board1.generatePuzzle(desired);
+                      var took = Date.now() - t0;
+                      updateUI();
+                      startTimer();
+                      if (res && res.ok) {
+                        status.innerText =
+                          "生成完成：留下线索 " +
+                          res.clues +
+                          "；用时 " +
+                          took +
+                          " ms。";
+                      } else {
+                        status.innerText = "生成失败，请重试。";
+                      }
+                    } catch (e) {
+                      status.innerText =
+                        "生成时出错：" + (e && e.message ? e.message : e);
+                    }
+                    btn.disabled = false;
+                    btn.classList.remove("disabled");
+                  }, 30);
+                } catch (e) {
+                  console.warn("generate button handler failed", e);
+                  btn.disabled = false;
+                  btn.classList.remove("disabled");
+                }
+              });
+            } catch (e) {
+              console.warn("setupGenerateUI failed", e);
+            }
+          }
+          setupGenerateUI();
+
           // tbInputSerial: when user types/pastes 81 chars, load into board
           (function setupInputSerial() {
             try {
@@ -1022,6 +1256,112 @@
               console.warn("setupInputSerial failed", e);
             }
           })();
+
+          // Timer functionality: start/stop/reset and display update
+          var _timerId = null;
+          var _timerStart = 0;
+          var _timerElapsed = 0; // ms
+          var _elapsed = 0;
+
+          var btnPause = document.getElementById("btnPause");
+
+          function _formatTime(ms) {
+            var s = Math.floor(ms / 1000);
+            var hh = Math.floor(s / 3600);
+            var mm = Math.floor((s % 3600) / 60);
+            var ss = s % 60;
+            if (hh > 0)
+              return (
+                hh +
+                ":" +
+                (mm < 10 ? "0" + mm : mm) +
+                ":" +
+                (ss < 10 ? "0" + ss : ss)
+              );
+            return (mm < 10 ? "0" + mm : mm) + ":" + (ss < 10 ? "0" + ss : ss);
+          }
+
+          function updateTimerDisplay() {
+            try {
+              var el = document.getElementById("timer");
+              if (!el) return;
+              var now = Date.now();
+              _elapsed = _timerElapsed + (_timerStart ? now - _timerStart : 0);
+              el.innerText = "计时: " + _formatTime(_elapsed);
+            } catch (e) {}
+          }
+
+          function startTimer() {
+            try {
+              stopTimer();
+              _timerElapsed = 0;
+              _timerStart = Date.now();
+              _isRunning = true;
+              btnPause.innerText = "暂停";
+              updateTimerDisplay();
+              _timerId = setInterval(updateTimerDisplay, 1000);
+            } catch (e) {
+              console.warn("startTimer failed", e);
+            }
+          }
+
+          function stopTimer() {
+            try {
+              if (_timerId) {
+                clearInterval(_timerId);
+                _timerId = null;
+              }
+              if (_timerStart) {
+                _timerElapsed += Date.now() - _timerStart;
+                _timerStart = 0;
+              }
+              updateTimerDisplay();
+            } catch (e) {
+              console.warn("stopTimer failed", e);
+            }
+          }
+
+          function resetTimer() {
+            try {
+              stopTimer();
+              _timerElapsed = 0;
+              _timerStart = 0;
+              updateTimerDisplay();
+            } catch (e) {
+              console.warn("resetTimer failed", e);
+            }
+          }
+
+          function continueTimer() {
+            try {
+              _timerStart = Date.now();
+              _timerElapsed = _elapsed;
+              updateTimerDisplay();
+              _timerId = setInterval(updateTimerDisplay, 1000);
+            } catch (e) {
+              console.warn("continueTimer failed", e);
+            }
+          }
+
+          function pauseTimer() {
+            try {
+              if (_isRunning) {
+                if (_timerId) {
+                  clearInterval(_timerId);
+                  _timerId = null;
+                }
+                btnPause.innerText = "开始";
+                _isRunning = false;
+              } else {
+                _isRunning = true;
+                btnPause.innerText = "暂停";
+                _timerId = setInterval(updateTimerDisplay, 1000);
+              }
+              updateTimerDisplay();
+            } catch (e) {
+              console.warn("stopTimer failed", e);
+            }
+          }
         </script>
       </div>
     </div>

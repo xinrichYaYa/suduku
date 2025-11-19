@@ -88,7 +88,7 @@ canvas {
 }
 
 #main {
-  padding: 10px;
+  padding: 0 10px;
   float: left;
 }
 
@@ -168,6 +168,7 @@ td.help li {
 /* Styles for editable OCR grid cells */
 .grid-cell {
   cursor: text;
+  -webkit-user-select: text;
   user-select: text;
 }
 .grid-cell:focus {
@@ -216,7 +217,22 @@ td.help li {
   margin-top: 5px;
   font-size: 1em;
 }
-
+#tbInputSerial {
+  font-size: 16px;
+  color: #333;
+  background-color: #f9f9f9;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+}
+#tbInputSerial:focus {
+  border-color: #409eff; /* 聚焦时边框变蓝 */
+  box-shadow: 0 0 4px rgba(64, 158, 255, 0.6);
+  background-color: #fff;
+  outline: none;
+}
 .Applybtn {
   border: 3px dashed #bec0da;
   border-radius: 5px;
@@ -228,6 +244,7 @@ td.help li {
   width: auto;
   font-weight: 100;
   display: block;
+  padding: 5px;
 }
 .Modifybtn {
   display: flex;
@@ -321,4 +338,35 @@ label[for="imgFile"] {
 #extraInfo {
   font-size: 0.8em;
   color: #696969;
+}
+
+#timer {
+  font-size: 0.95em;
+  color: #333;
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Generate puzzle controls */
+.generate-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+}
+.generate-controls label {
+  font-size: 0.95em;
+}
+#puzzleCluesRange {
+  width: 180px;
+}
+
+/* Disabled digit button visual */
+.digit-btn.disabled,
+.digit-btn[disabled] {
+  opacity: 0.38;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }

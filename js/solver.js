@@ -1,5 +1,9 @@
-// Converts global co-ords used in mouse events to relative to element
-//页面坐标转换成canvas的本地坐标
+
+/**
+ * 页面坐标转换成canvas的本地坐标
+ * @param {MouseEvent} event
+ * @returns {{x:number,y:number}}
+ */
 function relMouseCoords(event) {
   var totalOffsetX = 0;
   var totalOffsetY = 0;
@@ -11,7 +15,6 @@ function relMouseCoords(event) {
     totalOffsetX += currentElement.offsetLeft;
     totalOffsetY += currentElement.offsetTop;
   } while ((currentElement = currentElement.offsetParent));
-
   canvasX = event.pageX - totalOffsetX;
   canvasY = event.pageY - totalOffsetY;
 
@@ -23,14 +26,14 @@ function relMouseCoords(event) {
 HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
 
 // Javascript doesn't have 'contains' so added here for later readability
-Array.prototype.contains = function (element) {
-  for (var i = 0; i < this.length; i++) {
-    if (this[i] == element) {
-      return true;
-    }
-  }
-  return false;
-};
+// Array.prototype.contains = function (element) {
+//   for (var i = 0; i < this.length; i++) {
+//     if (this[i] == element) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
 
 var SquareSize = 3;
 var BoardSize = SquareSize * SquareSize;
@@ -100,7 +103,15 @@ function Cell(value) {
   this._value = value; // 0 means unassigned
   this._allowed = new AllowedValues(0x3e); // all possible
   this._answer = 0; // no answer
+  /**
+   * 是否为预置值（例如数独固定数字）
+   * @type {boolean}
+   */
   this._given = false;
+  /**
+   * 用户笔记（手动候选数字）
+   * @type {AllowedValues}
+   */
   this._notes = new AllowedValues(0); // user pencil notes (manual candidates)
 }
 
@@ -150,6 +161,10 @@ Cell.prototype.setValue = function (n) {
   this._notes = new AllowedValues(0);
 };
 
+/**
+ * 设置该单元格为预置值（不可修改）
+ * @param {number} n - 要设置的预置值
+ */
 Cell.prototype.setGiven = function (n) {
   if (n < 0 || n > 9) throw "Illegal value not in the range 1..9.";
   this._value = n;
@@ -159,6 +174,10 @@ Cell.prototype.setGiven = function (n) {
   this._notes = new AllowedValues(0);
 };
 
+/**
+ * 判断该单元格是否是预置值（不可修改）
+ * @returns {boolean} 是否为预置状态
+ */
 Cell.prototype.isGiven = function () {
   return this._given;
 };
@@ -171,7 +190,8 @@ Cell.prototype.clear = function () {
   this._value = 0; // means unassigned
   this._allowed = new AllowedValues(0x3e); // all possible
   this._answer = 0;
-  this._given = 0;
+  // this._given = 0;
+  this._given = false;
   this._notes = new AllowedValues(0);
 };
 
@@ -204,80 +224,80 @@ var SibType = {
   Square: 3,
 };
 
-function Location(row, col) {
+function CellLocation(row, col) {
   this.row = row;
   this.col = col;
 }
 
-Location.empty = new Location(-1, -1);
+CellLocation.empty = new CellLocation(-1, -1);
 
-Location.prototype.isEmpty = function () {
+CellLocation.prototype.isEmpty = function () {
   return this.row < 0;
 };
 
-Location.prototype.modulo = function (n) {
+CellLocation.prototype.modulo = function (n) {
   if (n < 0) return n + BoardSize;
   return n % BoardSize;
 };
 
-Location.prototype.left = function () {
-  return new Location(this.row, this.modulo(this.col - 1));
+CellLocation.prototype.left = function () {
+  return new CellLocation(this.row, this.modulo(this.col - 1));
 };
 
-Location.prototype.right = function () {
-  return new Location(this.row, this.modulo(this.col + 1));
+CellLocation.prototype.right = function () {
+  return new CellLocation(this.row, this.modulo(this.col + 1));
 };
 
-Location.prototype.up = function () {
-  return new Location(this.modulo(this.row - 1), this.col);
+CellLocation.prototype.up = function () {
+  return new CellLocation(this.modulo(this.row - 1), this.col);
 };
 
-Location.prototype.down = function () {
-  return new Location(this.modulo(this.row + 1), this.col);
+CellLocation.prototype.down = function () {
+  return new CellLocation(this.modulo(this.row + 1), this.col);
 };
 
-Location.prototype.toString = function () {
+CellLocation.prototype.toString = function () {
   return "Row=" + String(this.row) + "Col=" + String(this.col);
 };
 
-Location.prototype.getSquare = function () {
+CellLocation.prototype.getSquare = function () {
   return 3 * Math.floor(this.row / 3) + Math.floor(this.col / 3);
 };
 
-Location.prototype.equals = function (a) {
+CellLocation.prototype.equals = function (a) {
   return a.row == this.row && a.col == this.col;
 };
 
-Location.prototype.notEquals = function (a) {
+CellLocation.prototype.notEquals = function (a) {
   return a.row != this.row || a.col != this.col;
 };
 
-// Enumerator for locations of all cells
-Location.grid = function () {
+// Enumerator for CellLocations of all cells
+CellLocation.grid = function () {
   var locs = new Array();
   for (var i = 0; i < BoardSize; i++)
-    for (var j = 0; j < BoardSize; j++) locs.push(new Location(i, j));
+    for (var j = 0; j < BoardSize; j++) locs.push(new CellLocation(i, j));
   return locs;
 };
 
-// Enumerator for locations of cell siblings in the same row
-Location.prototype.rowSibs = function () {
+// Enumerator for CellLocations of cell siblings in the same row
+CellLocation.prototype.rowSibs = function () {
   var locs = new Array();
   for (var i = 0; i < BoardSize; i++)
-    if (i != this.col) locs.push(new Location(this.row, i));
+    if (i != this.col) locs.push(new CellLocation(this.row, i));
   return locs;
 };
 
-// Enumerator for locations of cell siblings in the same column
-Location.prototype.colSibs = function () {
+// Enumerator for CellLocations of cell siblings in the same column
+CellLocation.prototype.colSibs = function () {
   var locs = new Array();
   for (var i = 0; i < BoardSize; i++)
-    if (i != this.row) locs.push(new Location(i, this.col));
+    if (i != this.row) locs.push(new CellLocation(i, this.col));
   return locs;
 };
 
-// Enumerator for locations of cell siblings in the same square
-Location.prototype.squareSibs = function () {
+// Enumerator for CellLocations of cell siblings in the same square
+CellLocation.prototype.squareSibs = function () {
   var locs = new Array();
   var baseRow = 3 * Math.floor(this.row / 3); // this is how to convert float to an "int" - Javascript doesn't have ints!
   var baseCol = 3 * Math.floor(this.col / 3);
@@ -285,13 +305,13 @@ Location.prototype.squareSibs = function () {
     var r = baseRow + i;
     for (var j = 0; j < SquareSize; j++) {
       var c = baseCol + j;
-      if (r != this.row || c != this.col) locs.push(new Location(r, c));
+      if (r != this.row || c != this.col) locs.push(new CellLocation(r, c));
     }
   }
   return locs;
 };
 
-Location.prototype.getSibs = function (type) {
+CellLocation.prototype.getSibs = function (type) {
   switch (type) {
     case SibType.Row:
       return this.rowSibs();
@@ -302,19 +322,24 @@ Location.prototype.getSibs = function (type) {
   }
 };
 
-function Board() {
-  function MultiDimArray(rows, cols) {
-    var a = new Array(rows);
-    for (var i = 0; i < rows; i++) {
-      a[i] = new Array(cols);
-      for (var j = 0; j < cols; j++) a[i][j] = new Cell();
+/**
+ * 数独棋盘类
+ */
+class Board {
+  constructor() {
+    function MultiDimArray(rows, cols) {
+      var a = new Array(rows);
+      for (var i = 0; i < rows; i++) {
+        a[i] = new Array(cols);
+        for (var j = 0; j < cols; j++) a[i][j] = new Cell();
+      }
+      return a;
     }
-    return a;
-  }
 
-  this._digits = MultiDimArray(BoardSize, BoardSize);
-  this._isSolved = false;
-  this._isValid = false;
+    this._digits = MultiDimArray(BoardSize, BoardSize);
+    this._isSolved = false;
+    this._isValid = false;
+  }
 }
 
 Board.prototype.clone = function () {
@@ -372,7 +397,7 @@ Board.prototype.checkIsValidSibs = function (loc, digit, locs) {
 };
 
 Board.prototype.checkIsValid = function (loc, digit) {
-  // Checks if the digit can go in that location by checking it doesn't
+  // Checks if the digit can go in that CellLocation by checking it doesn't
   // exist in either the row, col or square siblings
   if (!this.checkIsValidSibs(loc, digit, loc.colSibs())) return false;
   if (!this.checkIsValidSibs(loc, digit, loc.rowSibs())) return false;
@@ -383,7 +408,7 @@ Board.prototype.checkIsValid = function (loc, digit) {
 
 Board.prototype.acceptPossibles = function () {
   var more = false;
-  var locs = Location.grid();
+  var locs = CellLocation.grid();
   for (var i = 0; i < locs.length; i++) {
     var loc = locs[i];
     var cell = this._digits[loc.row][loc.col];
@@ -423,21 +448,21 @@ Board.prototype.checkForHiddenSingles = function (loc, st) {
 };
 
 Board.prototype.findCellWithFewestChoices = function () {
-  var minLocation = Location.empty;
+  var minCellLocation = CellLocation.empty;
   var minCount = 9;
-  var locs = Location.grid();
+  var locs = CellLocation.grid();
   for (var i = 0; i < locs.length; i++) {
     var loc = locs[i];
     var cell = this.getCell(loc);
     if (!cell.isAssigned()) {
       var count = cell.getAllowedClone().count();
       if (count < minCount) {
-        minLocation = loc;
+        minCellLocation = loc;
         minCount = count;
       }
     }
   }
-  return minLocation;
+  return minCellLocation;
 };
 
 Board.prototype.updateAllowed = function () {
@@ -449,14 +474,14 @@ Board.prototype.updateAllowed = function () {
   var squares = new Array(BoardSize);
 
   // First aggregate assigned values to rows, cols, squares
-  var locs = Location.grid();
+  var locs = CellLocation.grid();
   for (var i = 0; i < locs.length; i++) {
     var loc = locs[i];
     // Disallow for all cells in this row
-    var contains = this.getCell(loc).valueMask();
-    rows[loc.row] |= contains;
-    cols[loc.col] |= contains;
-    squares[loc.getSquare()] |= contains;
+    var cons = this.getCell(loc).valueMask();
+    rows[loc.row] |= cons;//contains
+    cols[loc.col] |= cons;
+    squares[loc.getSquare()] |= cons;
   }
 
   // For each cell, aggregate the values already set in that row, col and square.
@@ -499,9 +524,9 @@ Board.prototype.updateAllowed = function () {
 };
 
 Board.prototype.trySolve = function (loc, value) {
-  // empty Location allowed
+  // empty CellLocation allowed
   if (!loc.isEmpty()) {
-    // assign a value to a location if provided
+    // assign a value to a CellLocation if provided
     var cell = this.getCell(loc);
     if (!cell.isAllowed(value)) throw "Internal error.";
     cell.setValue(value);
@@ -627,7 +652,7 @@ Board.prototype.serialize = function () {
   for (var r = 0; r < BoardSize; r++) {
     for (var c = 0; c < BoardSize; c++) {
       try {
-        var cell = this.getCell(new Location(r, c));
+        var cell = this.getCell(new CellLocation(r, c));
         obj.notes.push(
           cell && cell._notes && typeof cell._notes._mask !== "undefined"
             ? cell._notes._mask
@@ -659,7 +684,7 @@ Board.prototype.deserialize = function (obj) {
       for (var c = 0; c < BoardSize; c++) {
         var mask = Number(obj.notes[idx++]) || 0;
         try {
-          var cell = this.getCell(new Location(r, c));
+          var cell = this.getCell(new CellLocation(r, c));
           if (cell) {
             cell._notes = new AllowedValues(mask);
             if (mask !== 0) foundNotes = true;
@@ -675,4 +700,156 @@ Board.prototype.deserialize = function (obj) {
     this.updateAllowed();
   } catch (e) {}
   return { ok: !!ok, foundNotes: !!foundNotes };
+};
+
+// Fisher-Yates shuffle helper for arrays
+function _shuffleArray(arr) {
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+  return arr;
+}
+
+// Generate a full valid Sudoku solution by randomized backtracking.
+// After this returns true, the Board will be completely filled (and valid).
+Board.prototype.generateFullSolution = function () {
+  // operate in-place
+  this.clear();
+
+  var self = this;
+
+  function fill(board) {
+    board.updateAllowed();
+    if (!board._isValid) return false;
+    if (board._isSolved) return true;
+
+    // Choose a cell to try: collect all unassigned cells with the minimum
+    // number of candidates and pick one at random. This avoids deterministic
+    // behavior when many cells have the same candidate count (e.g. all 9 at start).
+    var gridLocs = CellLocation.grid();
+    var minCount = 10;
+    var minLocs = [];
+    for (var li = 0; li < gridLocs.length; li++) {
+      var l = gridLocs[li];
+      var cc = board.getCell(l);
+      if (!cc.isAssigned()) {
+        var cnt = cc.getAllowedClone().count();
+        if (cnt < minCount) {
+          minCount = cnt;
+          minLocs = [l];
+        } else if (cnt === minCount) {
+          minLocs.push(l);
+        }
+      }
+    }
+    if (minLocs.length === 0) return false;
+    // If any cell has 0 candidates, this branch is invalid
+    if (minCount === 0) return false;
+    var loc = minLocs[Math.floor(Math.random() * minLocs.length)];
+    var cell = board.getCell(loc);
+    var opts = cell._allowed.allowedValuesArray();
+    _shuffleArray(opts);
+    for (var i = 0; i < opts.length; i++) {
+      var v = opts[i];
+      var clone = board.clone();
+      try {
+        clone.getCell(loc).setValue(v);
+      } catch (e) {
+        continue;
+      }
+      if (fill(clone)) {
+        clone.copyTo(board);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  return fill(this);
+};
+
+// Generate a puzzle by creating a full solution, then removing digits while preserving uniqueness.
+// minClues: desired minimum number of givens to keep (between 17 and 81). If omitted, defaults to 30.
+// Returns an object { ok: boolean, clues: number }
+Board.prototype.generatePuzzle = function (minClues) {
+  if (!minClues || typeof minClues !== "number") minClues = 30;
+  if (minClues < 17) minClues = 17; // practical minimum for uniqueness
+  if (minClues > 81) minClues = 81;
+
+  // Step 1: produce a complete valid solution
+  var ok = this.generateFullSolution();
+  if (!ok) return { ok: false, clues: 0 };
+
+  // Ensure all cells are marked as givens initially
+  for (var r = 0; r < BoardSize; r++)
+    for (var c = 0; c < BoardSize; c++) {
+      try {
+        var cell = this.getCell(new CellLocation(r, c));
+        var val = cell.getValue();
+        cell.setGiven(val);
+      } catch (e) {}
+    }
+
+  // Build a shuffled list of all positions to attempt removal
+  var positions = [];
+  for (var i = 0; i < BoardSize * BoardSize; i++) positions.push(i);
+  _shuffleArray(positions);
+
+  // Try to remove digits one by one while keeping uniqueness (stop when we have minClues left)
+  var total = BoardSize * BoardSize;
+  for (var idx = 0; idx < positions.length && total > minClues; idx++) {
+    var p = positions[idx];
+    var row = Math.floor(p / BoardSize);
+    var col = p % BoardSize;
+    var loc = new CellLocation(row, col);
+    var saved = this.getCell(loc).getValue();
+    if (saved === 0) continue;
+
+    // Temporarily remove the value
+    var backup = this.clone();
+    try {
+      this.getCell(loc).setValue(0);
+      // After clearing, run uniqueness check on a clone to avoid modifying current board
+      var test = this.clone();
+      var count = 0;
+      try {
+        count = test.countSolutions(2);
+      } catch (e) {
+        count = 2; // assume multiple if counting failed
+      }
+      if (count === 1) {
+        // removal valid; decrease total
+        total--;
+      } else {
+        // revert
+        backup.copyTo(this);
+      }
+    } catch (e) {
+      // revert on any error
+      try {
+        backup.copyTo(this);
+      } catch (e2) {}
+    }
+  }
+
+  // Mark current non-zero cells as givens
+  var clues = 0;
+  for (var r2 = 0; r2 < BoardSize; r2++)
+    for (var c2 = 0; c2 < BoardSize; c2++) {
+      var cell2 = this.getCell(new CellLocation(r2, c2));
+      if (cell2.getValue() !== 0) {
+        cell2.setGiven(cell2.getValue());
+        clues++;
+      }
+    }
+
+  // Final updateAllowed
+  try {
+    this.updateAllowed();
+  } catch (e) {}
+
+  return { ok: true, clues: clues };
 };
