@@ -1051,6 +1051,7 @@
             clearUndo();
             board1.reset();
             updateUI();
+            resetTimer();
           }
 
           function solve() {
@@ -1293,7 +1294,7 @@
 
           function startTimer() {
             try {
-              stopTimer();
+              // stopTimer();
               _timerElapsed = 0;
               _timerStart = Date.now();
               _isRunning = true;
@@ -1326,7 +1327,8 @@
               stopTimer();
               _timerElapsed = 0;
               _timerStart = 0;
-              updateTimerDisplay();
+              _elapsed = 0;
+              startTimer();
             } catch (e) {
               console.warn("resetTimer failed", e);
             }
