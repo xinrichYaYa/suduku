@@ -625,7 +625,7 @@ Board.prototype.toString = function () {
   for (var row = 0; row < BoardSize; row++)
     for (var col = 0; col < BoardSize; col++) {
       var val = this._digits[row][col].getValue();
-      text += val == 0 ? "." : String(val);
+      text += val == 0 || val == null ? "." : String(val);
     }
   return text;
 };

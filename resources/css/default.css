@@ -2,7 +2,13 @@ body {
   font-size: 0.9em;
   font-family: verdana, arial, sans-serif;
   background-color: #000;
-  margin: auto;
+  height: 100%;
+    margin: 0;
+}
+
+html {
+    height: 95%;
+    margin: 0;
 }
 
 button {
@@ -44,11 +50,12 @@ canvas {
 #sudoku {
   margin-left: auto;
   margin-right: auto;
-  width: 945px;
-  height: 900px;
   background-color: #fff;
   padding: 10px;
+  height: 90%;
+  margin: 10px;
   border-radius: 12px;
+  overflow: hidden;
 }
 
 .banner {
@@ -89,7 +96,6 @@ canvas {
 
 #main {
   padding: 0 10px;
-  float: left;
 }
 
 #help li {
@@ -212,9 +218,9 @@ td.help li {
   transform: scale(1.08);
 }
 #tbSerial {
-  width: 538px;
+  width: 535px;
   background-color: #eee;
-  margin-top: 5px;
+  margin: 5px 10px;
   font-size: 1em;
 }
 #tbInputSerial {
@@ -232,6 +238,9 @@ td.help li {
   box-shadow: 0 0 4px rgba(64, 158, 255, 0.6);
   background-color: #fff;
   outline: none;
+}
+#load {
+  flex-shrink: 1;
 }
 .Applybtn {
   border: 3px dashed #bec0da;
